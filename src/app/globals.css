@@ -1,0 +1,183 @@
+@import "tailwindcss";
+
+:root {
+  /* Gameboy colors */
+  --gb-lightest: #9BBC0F;
+  --gb-light: #8BAC0F;
+  --gb-dark: #306230;
+  --gb-darkest: #0F380F;
+
+  /* Background */
+  --background: #1a1a2e;
+
+  /* Font */
+  --font-pixel: var(--font-pixel);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prevent zoom on double-tap for mobile */
+button, a {
+  touch-action: manipulation;
+}
+
+/* Focus states */
+:focus-visible {
+  outline: 2px solid var(--gb-lightest);
+  outline-offset: 2px;
+}
+
+/* Button reset */
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+/* Animations */
+@keyframes drop-bounce {
+  0% {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  10% { opacity: 0.8; }
+  20% { opacity: 0.6; }
+  30% { opacity: 0.9; }
+  40% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+@keyframes screen-on {
+  0% {
+    filter: brightness(0) contrast(0);
+    transform: scale(1, 0.01);
+  }
+  50% {
+    filter: brightness(1.5) contrast(1.2);
+    transform: scale(1, 1);
+  }
+  100% {
+    filter: brightness(1) contrast(1);
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 2px var(--gb-lightest);
+  }
+  50% {
+    box-shadow: 0 0 8px var(--gb-lightest), 0 0 12px var(--gb-light);
+  }
+}
+
+@keyframes credits-scroll {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+.animate-drop-bounce {
+  animation: drop-bounce 0.6s ease-out forwards;
+}
+
+.animate-flicker {
+  animation: flicker 0.3s ease-out;
+}
+
+.animate-screen-on {
+  animation: screen-on 0.5s ease-out forwards;
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-credits-scroll {
+  animation: credits-scroll 15s linear forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.15s ease-out forwards;
+}
+
+.animate-fade-out {
+  animation: fade-out 0.15s ease-out forwards;
+}
+
+/* Pixel font class */
+.font-pixel {
+  font-family: var(--font-pixel), monospace, system-ui;
+}
+
+/* Hide scrollbar but keep functionality */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Safe area for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
