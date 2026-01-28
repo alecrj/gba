@@ -260,6 +260,12 @@ export default function GameboyPortfolio() {
     }, 150);
   }, []);
 
+  // Store playBoot in a ref to avoid dependency issues
+  const playBootRef = useRef(playBoot);
+  useEffect(() => {
+    playBootRef.current = playBoot;
+  }, [playBoot]);
+
   // Boot sequence - single robust effect
   useEffect(() => {
     if (screen !== 'boot') return;
@@ -280,7 +286,7 @@ export default function GameboyPortfolio() {
     // Phase 2: Logo drops (300ms)
     timers.push(setTimeout(() => {
       setBootPhase('logo');
-      playBoot();
+      playBootRef.current();
     }, 300));
 
     // Phase 3: Text starts appearing (1100ms = 300 + 800)
@@ -305,7 +311,8 @@ export default function GameboyPortfolio() {
     return () => {
       timers.forEach(timer => clearTimeout(timer));
     };
-  }, [screen, playBoot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
 
   // Cursor blink
   useEffect(() => {
@@ -378,10 +385,11 @@ export default function GameboyPortfolio() {
       playBack();
       changeScreen('projects');
       setSelectedProject(null);
-    } else if (screen === 'menu' || screen === 'boot') {
-      // Can't go back - shake!
+    } else if (screen === 'menu') {
+      // Can't go back from menu - shake!
       triggerShake();
     }
+    // On boot screen, B does nothing (no shake)
   }, [screen, playBack, changeScreen, triggerShake, handleButtonPress]);
 
   // Keyboard controls
