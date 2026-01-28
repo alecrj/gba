@@ -5,7 +5,7 @@ import { useGameboySound } from '@/hooks/useGameboySound';
 import { useKonamiCode } from '@/hooks/useKonamiCode';
 import { useResponsiveScale } from '@/hooks/useResponsiveScale';
 
-type Screen = 'boot' | 'menu' | 'projects' | 'project-detail' | 'about' | 'skills' | 'contact' | 'credits';
+type Screen = 'boot' | 'menu' | 'projects' | 'project-detail' | 'about' | 'skills' | 'contact' | 'credits' | 'testimonials';
 
 interface Project {
   id: string;
@@ -18,10 +18,15 @@ interface Project {
   icon: 'plane' | 'phone' | 'browser';
 }
 
+interface Testimonial {
+  name: string;
+  role: string;
+  text: string;
+}
+
 // Pixel Art Icons as CSS components
-function PixelIcon({ type, size = 12 }: { type: 'plane' | 'phone' | 'browser'; size?: number }) {
+function PixelIcon({ type, size = 12, color = '#9BBC0F' }: { type: 'plane' | 'phone' | 'browser'; size?: number; color?: string }) {
   const pixel = size / 8;
-  const color = '#9BBC0F';
 
   const icons: Record<string, number[][]> = {
     plane: [
@@ -83,10 +88,32 @@ function PixelIcon({ type, size = 12 }: { type: 'plane' | 'phone' | 'browser'; s
   );
 }
 
+// RPG-style dialog box component
+function DialogBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="relative p-3 text-xs"
+      style={{
+        border: '3px solid #9BBC0F',
+        background: '#0F380F',
+        boxShadow: 'inset 2px 2px 0 #306230',
+      }}
+    >
+      {/* Corner decorations */}
+      <div className="absolute -top-1 -left-1 w-2 h-2" style={{ background: '#9BBC0F' }} />
+      <div className="absolute -top-1 -right-1 w-2 h-2" style={{ background: '#9BBC0F' }} />
+      <div className="absolute -bottom-1 -left-1 w-2 h-2" style={{ background: '#9BBC0F' }} />
+      <div className="absolute -bottom-1 -right-1 w-2 h-2" style={{ background: '#9BBC0F' }} />
+      {children}
+    </div>
+  );
+}
+
 export default function GameboyPortfolio() {
   const [screen, setScreen] = useState<Screen>('boot');
   const [menuIndex, setMenuIndex] = useState(0);
   const [projectIndex, setProjectIndex] = useState(0);
+  const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [bootPhase, setBootPhase] = useState<'flicker' | 'logo' | 'text' | 'ready'>('flicker');
   const [bootText, setBootText] = useState<string[]>([]);
   const [showCursor, setShowCursor] = useState(true);
@@ -94,15 +121,22 @@ export default function GameboyPortfolio() {
   const [transitioning, setTransitioning] = useState(false);
   const [creditsUnlocked, setCreditsUnlocked] = useState(false);
   const [hasBooted, setHasBooted] = useState(false);
+  const [contrast, setContrast] = useState(100);
+  const [screenShake, setScreenShake] = useState(false);
+  const [lowBattery, setLowBattery] = useState(false);
+  const [skillsAnimated, setSkillsAnimated] = useState(false);
+  const [glarePosition, setGlarePosition] = useState(0);
+  const [buttonPressed, setButtonPressed] = useState<string | null>(null);
 
   const screenRef = useRef<HTMLDivElement>(null);
   const bootedRef = useRef(false);
+  const startTimeRef = useRef(Date.now());
   const scale = useResponsiveScale(1.5);
   const { soundEnabled, toggleSound, playBlip, playSelect, playBack, playBoot, playSecret } = useGameboySound();
 
   const menuItems = creditsUnlocked
-    ? ['PROJECTS', 'ABOUT', 'SKILLS', 'CONTACT', 'CREDITS']
-    : ['PROJECTS', 'ABOUT', 'SKILLS', 'CONTACT'];
+    ? ['PROJECTS', 'ABOUT', 'SKILLS', 'CONTACT', 'REVIEWS', 'CREDITS']
+    : ['PROJECTS', 'ABOUT', 'SKILLS', 'CONTACT', 'REVIEWS'];
 
   const projects: Project[] = [
     {
@@ -137,6 +171,24 @@ export default function GameboyPortfolio() {
     }
   ];
 
+  const testimonials: Testimonial[] = [
+    {
+      name: 'MIKE T.',
+      role: 'HVAC OWNER',
+      text: 'Our website finally converts. Calls are up 40% since launch.',
+    },
+    {
+      name: 'SARAH L.',
+      role: 'STARTUP CEO',
+      text: 'Alec shipped our MVP in 3 weeks. Investors loved it.',
+    },
+    {
+      name: 'JAMES R.',
+      role: 'AGENCY DIR.',
+      text: 'Best developer we have worked with. Period.',
+    },
+  ];
+
   const skills = [
     { name: 'REACT/NEXT', level: 9 },
     { name: 'TYPESCRIPT', level: 8 },
@@ -146,12 +198,43 @@ export default function GameboyPortfolio() {
     { name: 'UI/UX', level: 8 },
   ];
 
+  // Dynamic colors based on contrast
   const colors = {
-    lightest: '#9BBC0F',
-    light: '#8BAC0F',
-    dark: '#306230',
-    darkest: '#0F380F'
+    lightest: `hsl(72, 85%, ${35 + (contrast - 50) * 0.3}%)`,
+    light: `hsl(72, 85%, ${30 + (contrast - 50) * 0.25}%)`,
+    dark: `hsl(120, 40%, ${18 + (contrast - 50) * 0.1}%)`,
+    darkest: `hsl(120, 60%, ${8 + (contrast - 50) * 0.05}%)`,
   };
+
+  // Animated screen glare
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlarePosition(prev => (prev + 1) % 200);
+    }, 50);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Low battery effect after 3 minutes
+  useEffect(() => {
+    const checkBattery = () => {
+      const elapsed = Date.now() - startTimeRef.current;
+      if (elapsed > 180000 && !lowBattery) { // 3 minutes
+        setLowBattery(true);
+        // Flicker effect
+        setTimeout(() => setLowBattery(false), 200);
+        setTimeout(() => setLowBattery(true), 400);
+        setTimeout(() => setLowBattery(false), 600);
+      }
+    };
+    const interval = setInterval(checkBattery, 10000);
+    return () => clearInterval(interval);
+  }, [lowBattery]);
+
+  // Screen shake helper
+  const triggerShake = useCallback(() => {
+    setScreenShake(true);
+    setTimeout(() => setScreenShake(false), 150);
+  }, []);
 
   // Konami code handler
   const handleKonamiCode = useCallback(() => {
@@ -167,6 +250,10 @@ export default function GameboyPortfolio() {
     setTransitioning(true);
     setTimeout(() => {
       setScreen(newScreen);
+      if (newScreen === 'skills') {
+        setSkillsAnimated(false);
+        setTimeout(() => setSkillsAnimated(true), 100);
+      }
       setTimeout(() => {
         setTransitioning(false);
       }, 50);
@@ -177,7 +264,6 @@ export default function GameboyPortfolio() {
   useEffect(() => {
     if (screen !== 'boot' || bootedRef.current) return;
 
-    // Phase 1: Flicker effect (CRT power on)
     const flickerTimer = setTimeout(() => {
       setBootPhase('logo');
       playBoot();
@@ -189,7 +275,6 @@ export default function GameboyPortfolio() {
   useEffect(() => {
     if (screen !== 'boot' || bootPhase !== 'logo' || bootedRef.current) return;
 
-    // Phase 2: Logo appears and drops
     const logoTimer = setTimeout(() => {
       setBootPhase('text');
     }, 800);
@@ -200,7 +285,6 @@ export default function GameboyPortfolio() {
   useEffect(() => {
     if (screen !== 'boot' || bootPhase !== 'text' || bootedRef.current) return;
 
-    // Phase 3: Boot text sequence
     const bootSequence = [
       '',
       'LOADING...',
@@ -233,28 +317,43 @@ export default function GameboyPortfolio() {
     return () => clearInterval(interval);
   }, []);
 
+  // Button press visual feedback
+  const handleButtonPress = useCallback((button: string) => {
+    setButtonPressed(button);
+    setTimeout(() => setButtonPressed(null), 100);
+  }, []);
+
   // Navigation functions
   const goUp = useCallback(() => {
+    handleButtonPress('up');
     if (screen === 'menu') {
       setMenuIndex(prev => prev > 0 ? prev - 1 : menuItems.length - 1);
       playBlip();
     } else if (screen === 'projects') {
       setProjectIndex(prev => prev > 0 ? prev - 1 : projects.length - 1);
       playBlip();
+    } else if (screen === 'testimonials') {
+      setTestimonialIndex(prev => prev > 0 ? prev - 1 : testimonials.length - 1);
+      playBlip();
     }
-  }, [screen, menuItems.length, projects.length, playBlip]);
+  }, [screen, menuItems.length, projects.length, testimonials.length, playBlip, handleButtonPress]);
 
   const goDown = useCallback(() => {
+    handleButtonPress('down');
     if (screen === 'menu') {
       setMenuIndex(prev => prev < menuItems.length - 1 ? prev + 1 : 0);
       playBlip();
     } else if (screen === 'projects') {
       setProjectIndex(prev => prev < projects.length - 1 ? prev + 1 : 0);
       playBlip();
+    } else if (screen === 'testimonials') {
+      setTestimonialIndex(prev => prev < testimonials.length - 1 ? prev + 1 : 0);
+      playBlip();
     }
-  }, [screen, menuItems.length, projects.length, playBlip]);
+  }, [screen, menuItems.length, projects.length, testimonials.length, playBlip, handleButtonPress]);
 
   const pressA = useCallback(() => {
+    handleButtonPress('a');
     if (screen === 'boot' && bootPhase === 'ready') {
       playSelect();
       changeScreen('menu');
@@ -265,26 +364,31 @@ export default function GameboyPortfolio() {
       else if (selected === 'ABOUT') changeScreen('about');
       else if (selected === 'SKILLS') changeScreen('skills');
       else if (selected === 'CONTACT') changeScreen('contact');
+      else if (selected === 'REVIEWS') changeScreen('testimonials');
       else if (selected === 'CREDITS') changeScreen('credits');
     } else if (screen === 'projects') {
       playSelect();
       setSelectedProject(projects[projectIndex]);
       changeScreen('project-detail');
     }
-  }, [screen, bootPhase, menuItems, menuIndex, projectIndex, projects, playSelect, changeScreen]);
+  }, [screen, bootPhase, menuItems, menuIndex, projectIndex, projects, playSelect, changeScreen, handleButtonPress]);
 
   const pressB = useCallback(() => {
-    if (['projects', 'about', 'skills', 'contact', 'credits'].includes(screen)) {
+    handleButtonPress('b');
+    if (['projects', 'about', 'skills', 'contact', 'credits', 'testimonials'].includes(screen)) {
       playBack();
       changeScreen('menu');
     } else if (screen === 'project-detail') {
       playBack();
       changeScreen('projects');
       setSelectedProject(null);
+    } else if (screen === 'menu' || screen === 'boot') {
+      // Can't go back - shake!
+      triggerShake();
     }
-  }, [screen, playBack, changeScreen]);
+  }, [screen, playBack, changeScreen, triggerShake, handleButtonPress]);
 
-  // Keyboard controls - using refs to avoid stale closures
+  // Keyboard controls
   const goUpRef = useRef(goUp);
   const goDownRef = useRef(goDown);
   const pressARef = useRef(pressA);
@@ -357,6 +461,7 @@ export default function GameboyPortfolio() {
         else if (selected === 'ABOUT') changeScreen('about');
         else if (selected === 'SKILLS') changeScreen('skills');
         else if (selected === 'CONTACT') changeScreen('contact');
+        else if (selected === 'REVIEWS') changeScreen('testimonials');
         else if (selected === 'CREDITS') changeScreen('credits');
       };
 
@@ -378,7 +483,9 @@ export default function GameboyPortfolio() {
                   color: colors.lightest
                 }}
               >
-                <span className="w-6">{menuIndex === i ? '▶' : ''}</span>
+                <span className={`w-6 ${menuIndex === i ? 'animate-bounce-subtle' : ''}`}>
+                  {menuIndex === i ? '▶' : ''}
+                </span>
                 <span>{item}</span>
                 {item === 'CREDITS' && <span className="ml-2 text-xs">★</span>}
               </button>
@@ -404,7 +511,7 @@ export default function GameboyPortfolio() {
         <div className="h-full flex flex-col">
           <div className="text-xs opacity-70 mb-2 flex justify-between">
             <button onClick={pressB} className="hover:opacity-80">◀ PROJECTS</button>
-            <span>B:BACK</span>
+            <button onClick={pressB} className="hover:opacity-80">B:BACK</button>
           </div>
           <div className="flex-1">
             {projects.map((p, i) => (
@@ -418,8 +525,10 @@ export default function GameboyPortfolio() {
                 }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-4 text-xs">{projectIndex === i ? '▶' : ''}</span>
-                  <PixelIcon type={p.icon} size={16} />
+                  <span className={`w-4 text-xs ${projectIndex === i ? 'animate-bounce-subtle' : ''}`}>
+                    {projectIndex === i ? '▶' : ''}
+                  </span>
+                  <PixelIcon type={p.icon} size={16} color={colors.lightest} />
                   <div>
                     <div className="font-bold text-sm">{p.name}</div>
                     <div className="text-xs opacity-70">{p.subtitle}</div>
@@ -444,7 +553,7 @@ export default function GameboyPortfolio() {
           </div>
           <div className="flex-1 text-sm">
             <div className="flex items-center gap-2 mb-1">
-              <PixelIcon type={selectedProject.icon} size={20} />
+              <PixelIcon type={selectedProject.icon} size={20} color={colors.lightest} />
               <div className="font-bold text-base">{selectedProject.name}</div>
             </div>
             <div className="text-xs opacity-70 mb-3">{selectedProject.subtitle}</div>
@@ -493,11 +602,19 @@ export default function GameboyPortfolio() {
             <p>→ Sites that convert</p>
             <p className="opacity-50 pt-2">Florida, USA</p>
           </div>
+          {/* Resume download */}
+          <button
+            onClick={() => window.open('/resume.pdf', '_blank')}
+            className="mt-2 py-2 text-xs border text-center hover:opacity-80 transition-opacity"
+            style={{ borderColor: colors.light }}
+          >
+            ⬇ DOWNLOAD RESUME
+          </button>
         </div>
       );
     }
 
-    // SKILLS
+    // SKILLS with animated bars
     if (screen === 'skills') {
       return (
         <div className="h-full flex flex-col">
@@ -506,7 +623,7 @@ export default function GameboyPortfolio() {
             <button onClick={pressB} className="hover:opacity-80">B:BACK</button>
           </div>
           <div className="flex-1 space-y-2">
-            {skills.map(skill => (
+            {skills.map((skill, index) => (
               <div key={skill.name} className="text-xs">
                 <div className="flex justify-between mb-1">
                   <span>{skill.name}</span>
@@ -514,10 +631,11 @@ export default function GameboyPortfolio() {
                 </div>
                 <div className="h-2 w-full" style={{ background: colors.dark }}>
                   <div
-                    className="h-full transition-all duration-500"
+                    className="h-full transition-all duration-700 ease-out"
                     style={{
-                      width: `${skill.level * 10}%`,
-                      background: colors.lightest
+                      width: skillsAnimated ? `${skill.level * 10}%` : '0%',
+                      background: colors.lightest,
+                      transitionDelay: `${index * 100}ms`
                     }}
                   />
                 </div>
@@ -566,6 +684,42 @@ export default function GameboyPortfolio() {
               </a>
             </div>
           </div>
+        </div>
+      );
+    }
+
+    // TESTIMONIALS (RPG Dialog Style)
+    if (screen === 'testimonials') {
+      const t = testimonials[testimonialIndex];
+      return (
+        <div className="h-full flex flex-col">
+          <div className="text-xs opacity-70 mb-3 flex justify-between">
+            <button onClick={pressB} className="hover:opacity-80">◀ REVIEWS</button>
+            <button onClick={pressB} className="hover:opacity-80">B:BACK</button>
+          </div>
+          <div className="flex-1 flex flex-col justify-center">
+            <DialogBox>
+              <div className="mb-2 font-bold">{t.name}</div>
+              <div className="text-xs opacity-70 mb-3">{t.role}</div>
+              <div className="leading-relaxed">
+                &quot;{t.text}&quot;
+              </div>
+            </DialogBox>
+            <div className="flex justify-center gap-2 mt-4">
+              {testimonials.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTestimonialIndex(i)}
+                  className="w-2 h-2 rounded-full transition-opacity"
+                  style={{
+                    background: colors.lightest,
+                    opacity: testimonialIndex === i ? 1 : 0.3
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="text-xs text-center opacity-50">↑↓ MORE REVIEWS</div>
         </div>
       );
     }
@@ -620,7 +774,7 @@ export default function GameboyPortfolio() {
     >
       {/* Gameboy Device */}
       <div
-        className="relative"
+        className={`relative ${screenShake ? 'animate-shake' : ''}`}
         style={{
           background: 'linear-gradient(145deg, #c8c8c8 0%, #a0a0a0 50%, #888888 100%)',
           borderRadius: '10px 10px 30px 30px',
@@ -637,6 +791,12 @@ export default function GameboyPortfolio() {
           style={{ background: '#8b2252' }}
         />
 
+        {/* Link cable port (decorative notch) */}
+        <div
+          className="absolute top-1/3 -left-1 w-2 h-8 rounded-r"
+          style={{ background: '#707070', boxShadow: 'inset 1px 0 2px rgba(0,0,0,0.3)' }}
+        />
+
         {/* Screen housing */}
         <div
           className="rounded-lg p-4 mb-4"
@@ -648,7 +808,14 @@ export default function GameboyPortfolio() {
           {/* Screen bezel */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{background: '#9b1b30'}}/>
+              {/* Power LED */}
+              <div
+                className={`w-2 h-2 rounded-full ${hasBooted ? 'animate-led-glow' : ''}`}
+                style={{
+                  background: hasBooted ? '#ff0040' : '#4a0015',
+                  boxShadow: hasBooted ? '0 0 6px #ff0040, 0 0 10px #ff0040' : 'none',
+                }}
+              />
               <span className="text-xs text-gray-400 tracking-widest font-bold">PORTFOLIO</span>
             </div>
             {/* Sound toggle */}
@@ -664,13 +831,15 @@ export default function GameboyPortfolio() {
           {/* Actual screen */}
           <div
             ref={screenRef}
-            className={`relative overflow-hidden ${!hasBooted && bootPhase === 'flicker' ? '' : ''}`}
+            className="relative overflow-hidden"
             style={{
               background: colors.darkest,
               padding: '8px',
               borderRadius: '4px',
               boxShadow: 'inset 0 0 20px rgba(0,0,0,0.5)',
-              height: '260px'
+              height: '260px',
+              filter: lowBattery ? 'brightness(0.5)' : 'none',
+              transition: 'filter 0.2s',
             }}
           >
             {/* Transition overlay */}
@@ -698,13 +867,31 @@ export default function GameboyPortfolio() {
               }}
             />
 
-            {/* Screen glare */}
+            {/* Animated screen glare */}
             <div
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 pointer-events-none opacity-30"
               style={{
-                background: 'linear-gradient(135deg, rgba(155,188,15,0.1) 0%, transparent 50%)'
+                background: `linear-gradient(135deg, transparent ${glarePosition - 50}%, rgba(155,188,15,0.15) ${glarePosition}%, transparent ${glarePosition + 50}%)`,
               }}
             />
+          </div>
+
+          {/* Contrast slider */}
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-xs text-gray-500">◐</span>
+            <input
+              type="range"
+              min="30"
+              max="170"
+              value={contrast}
+              onChange={(e) => setContrast(Number(e.target.value))}
+              className="flex-1 h-1 appearance-none rounded cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #3a3a3a, #6a6a6a)`,
+              }}
+              aria-label="Contrast"
+            />
+            <span className="text-xs text-gray-500">◑</span>
           </div>
         </div>
 
@@ -733,10 +920,13 @@ export default function GameboyPortfolio() {
             {/* Up */}
             <button
               onClick={goUp}
-              className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:brightness-75 transition-all"
+              className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center transition-all"
               style={{
-                background: 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)',
-                borderRadius: '4px 4px 0 0'
+                background: buttonPressed === 'up'
+                  ? 'linear-gradient(180deg, #2a2a2a 0%, #3a3a3a 100%)'
+                  : 'linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%)',
+                borderRadius: '4px 4px 0 0',
+                transform: buttonPressed === 'up' ? 'translateY(1px)' : 'none',
               }}
               aria-label="Up"
             >
@@ -745,10 +935,13 @@ export default function GameboyPortfolio() {
             {/* Down */}
             <button
               onClick={goDown}
-              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center active:brightness-75 transition-all"
+              className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-8 flex items-center justify-center transition-all"
               style={{
-                background: 'linear-gradient(0deg, #3a3a3a 0%, #2a2a2a 100%)',
-                borderRadius: '0 0 4px 4px'
+                background: buttonPressed === 'down'
+                  ? 'linear-gradient(0deg, #2a2a2a 0%, #3a3a3a 100%)'
+                  : 'linear-gradient(0deg, #3a3a3a 0%, #2a2a2a 100%)',
+                borderRadius: '0 0 4px 4px',
+                transform: buttonPressed === 'down' ? 'translateY(-1px)' : 'none',
               }}
               aria-label="Down"
             >
@@ -788,11 +981,16 @@ export default function GameboyPortfolio() {
             <div className="flex flex-col items-center">
               <button
                 onClick={pressB}
-                className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold active:scale-95 transition-all"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{
-                  background: 'linear-gradient(145deg, #9b1b30 0%, #7a1528 100%)',
-                  boxShadow: '0 4px 0 #5a1020, 0 6px 10px rgba(0,0,0,0.3)',
-                  color: '#2a0a10'
+                  background: buttonPressed === 'b'
+                    ? 'linear-gradient(145deg, #7a1528 0%, #9b1b30 100%)'
+                    : 'linear-gradient(145deg, #9b1b30 0%, #7a1528 100%)',
+                  boxShadow: buttonPressed === 'b'
+                    ? '0 2px 0 #5a1020, 0 3px 5px rgba(0,0,0,0.3)'
+                    : '0 4px 0 #5a1020, 0 6px 10px rgba(0,0,0,0.3)',
+                  color: '#2a0a10',
+                  transform: buttonPressed === 'b' ? 'translateY(2px)' : 'none',
                 }}
                 aria-label="B button - Back"
               >
@@ -803,11 +1001,16 @@ export default function GameboyPortfolio() {
             <div className="flex flex-col items-center -mt-4">
               <button
                 onClick={pressA}
-                className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold active:scale-95 transition-all"
+                className="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold transition-all"
                 style={{
-                  background: 'linear-gradient(145deg, #9b1b30 0%, #7a1528 100%)',
-                  boxShadow: '0 4px 0 #5a1020, 0 6px 10px rgba(0,0,0,0.3)',
-                  color: '#2a0a10'
+                  background: buttonPressed === 'a'
+                    ? 'linear-gradient(145deg, #7a1528 0%, #9b1b30 100%)'
+                    : 'linear-gradient(145deg, #9b1b30 0%, #7a1528 100%)',
+                  boxShadow: buttonPressed === 'a'
+                    ? '0 2px 0 #5a1020, 0 3px 5px rgba(0,0,0,0.3)'
+                    : '0 4px 0 #5a1020, 0 6px 10px rgba(0,0,0,0.3)',
+                  color: '#2a0a10',
+                  transform: buttonPressed === 'a' ? 'translateY(2px)' : 'none',
                 }}
                 aria-label="A button - Select"
               >
@@ -823,7 +1026,7 @@ export default function GameboyPortfolio() {
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={pressB}
-              className="active:translate-y-px transition-transform"
+              className="transition-transform"
               aria-label="Select"
               style={{
                 width: '40px',
@@ -848,7 +1051,7 @@ export default function GameboyPortfolio() {
           <div className="flex flex-col items-center gap-1">
             <button
               onClick={pressA}
-              className="active:translate-y-px transition-transform"
+              className="transition-transform"
               aria-label="Start"
               style={{
                 width: '40px',
@@ -890,11 +1093,18 @@ export default function GameboyPortfolio() {
             </div>
           ))}
         </div>
+
+        {/* Battery compartment lines (decorative) */}
+        <div className="absolute bottom-12 left-4 w-8 h-16 opacity-20">
+          <div className="w-full h-px bg-gray-600 mb-1" />
+          <div className="w-full h-px bg-gray-600 mb-1" />
+          <div className="w-full h-px bg-gray-600" />
+        </div>
       </div>
 
       {/* Keyboard hint - only on desktop */}
       <div className="hidden md:block fixed bottom-4 left-0 right-0 text-center text-white/30 text-xs">
-        ↑↓ Navigate • Enter Select • Esc Back • Try the Konami code...
+        ↑↓ Navigate • A/Enter Select • B/Esc Back • ↑↑↓↓←→←→BA
       </div>
     </div>
   );

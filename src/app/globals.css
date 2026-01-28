@@ -160,6 +160,43 @@ button {
   animation: fade-out 0.15s ease-out forwards;
 }
 
+/* Screen shake */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+.animate-shake {
+  animation: shake 0.15s ease-out;
+}
+
+/* LED glow */
+@keyframes led-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px #ff0040, 0 0 8px #ff0040;
+  }
+  50% {
+    box-shadow: 0 0 6px #ff0040, 0 0 12px #ff0040, 0 0 16px #ff0030;
+  }
+}
+
+.animate-led-glow {
+  animation: led-glow 2s ease-in-out infinite;
+}
+
+/* Subtle cursor bounce */
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(2px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 0.6s ease-in-out infinite;
+}
+
 /* Pixel font class */
 .font-pixel {
   font-family: var(--font-pixel), monospace, system-ui;
