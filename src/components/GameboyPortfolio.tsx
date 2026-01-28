@@ -385,12 +385,9 @@ export default function GameboyPortfolio() {
       playBack();
       changeScreen('projects');
       setSelectedProject(null);
-    } else if (screen === 'menu') {
-      // Can't go back from menu - shake!
-      triggerShake();
     }
-    // On boot screen, B does nothing (no shake)
-  }, [screen, playBack, changeScreen, triggerShake, handleButtonPress]);
+    // On boot or menu screen, B does nothing (just button feedback)
+  }, [screen, playBack, changeScreen, handleButtonPress]);
 
   // Keyboard controls
   const goUpRef = useRef(goUp);
@@ -435,30 +432,34 @@ export default function GameboyPortfolio() {
     // BOOT
     if (screen === 'boot') {
       return (
-        <div className="h-full flex flex-col justify-center items-center text-center">
+        <div className="h-full flex flex-col items-center pt-16">
           {/* Flicker phase - brief dark screen */}
           {bootPhase === 'flicker' && (
-            <div className="opacity-50">◆</div>
+            <div className="opacity-50 text-lg">◆</div>
           )}
 
           {/* Logo with drop animation */}
-          {(bootPhase === 'logo' || bootPhase === 'text' || bootPhase === 'ready') && (
+          {bootPhase !== 'flicker' && (
             <div
-              className={`text-lg font-bold tracking-wider mb-4 ${bootPhase === 'logo' ? 'animate-drop-bounce' : ''}`}
+              className={`text-lg font-bold tracking-wider ${bootPhase === 'logo' ? 'animate-drop-bounce' : ''}`}
             >
               ◆ ALEC ◆
             </div>
           )}
 
-          {/* Boot text lines */}
-          {(bootPhase === 'text' || bootPhase === 'ready') && bootText.map((line, i) => (
-            <div key={i} className="leading-relaxed text-xs min-h-[1.5em]">
-              {line}
-              {i === bootText.length - 1 && bootPhase === 'ready' && (
-                <span className={`ml-1 ${showCursor ? 'opacity-100' : 'opacity-0'}`}>_</span>
-              )}
+          {/* Boot text lines - below the logo */}
+          {(bootPhase === 'text' || bootPhase === 'ready') && (
+            <div className="mt-8 text-center">
+              {bootText.map((line, i) => (
+                <div key={i} className="text-xs leading-loose">
+                  {line}
+                  {i === bootText.length - 1 && bootPhase === 'ready' && (
+                    <span className={`ml-1 ${showCursor ? 'opacity-100' : 'opacity-0'}`}>_</span>
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       );
     }
@@ -862,7 +863,7 @@ export default function GameboyPortfolio() {
 
             {/* Screen content */}
             <div
-              className="h-full overflow-hidden relative font-pixel"
+              className="h-full overflow-y-auto overflow-x-hidden relative font-pixel no-scrollbar"
               style={{
                 color: colors.lightest,
                 fontSize: '10px'
