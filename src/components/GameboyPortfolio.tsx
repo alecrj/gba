@@ -273,11 +273,11 @@ export default function GameboyPortfolio() {
       // Already booted, just show final state
       setBootPhase('ready');
       setHasBooted(true);
-      setBootText(['', 'LOADING...', '████████████ OK', '', 'PRESS START']);
+      setBootText(['LOADING...', '████████████ OK', '', 'PRESS START']);
       return;
     }
 
-    const bootSequence = ['', 'LOADING...', '████████████ OK', '', 'PRESS START'];
+    const bootSequence = ['LOADING...', '████████████ OK', '', 'PRESS START'];
     const timers: NodeJS.Timeout[] = [];
 
     // Phase 1: Flicker (0-300ms)
@@ -435,49 +435,30 @@ export default function GameboyPortfolio() {
     // BOOT
     if (screen === 'boot') {
       return (
-        <div
-          className="h-full flex flex-col justify-center items-center text-center"
-          style={{
-            animation: bootPhase === 'flicker' ? 'flicker 0.3s ease-out' : undefined,
-          }}
-        >
-          {/* CRT power-on line effect during flicker */}
+        <div className="h-full flex flex-col justify-center items-center text-center">
+          {/* Flicker phase - brief dark screen */}
           {bootPhase === 'flicker' && (
-            <div
-              className="w-full h-0.5 animate-pulse"
-              style={{ background: colors.lightest }}
-            />
+            <div className="opacity-50">◆</div>
           )}
 
           {/* Logo with drop animation */}
-          {bootPhase !== 'flicker' && (
-            <>
-              <div
-                className="text-lg font-bold tracking-wider mb-4"
-                style={{
-                  animation: bootPhase === 'logo' ? 'drop-bounce 0.6s ease-out forwards' : undefined,
-                }}
-              >
-                ◆ ALEC ◆
-              </div>
-
-              {/* Boot text lines */}
-              {bootPhase !== 'logo' && bootText.map((line, i) => (
-                <div
-                  key={i}
-                  className="leading-relaxed text-xs"
-                  style={{
-                    animation: 'fade-in 0.15s ease-out forwards',
-                  }}
-                >
-                  {line}
-                  {i === bootText.length - 1 && bootPhase === 'ready' && (
-                    <span className={showCursor ? 'opacity-100' : 'opacity-0'}>_</span>
-                  )}
-                </div>
-              ))}
-            </>
+          {(bootPhase === 'logo' || bootPhase === 'text' || bootPhase === 'ready') && (
+            <div
+              className={`text-lg font-bold tracking-wider mb-4 ${bootPhase === 'logo' ? 'animate-drop-bounce' : ''}`}
+            >
+              ◆ ALEC ◆
+            </div>
           )}
+
+          {/* Boot text lines */}
+          {(bootPhase === 'text' || bootPhase === 'ready') && bootText.map((line, i) => (
+            <div key={i} className="leading-relaxed text-xs min-h-[1.5em]">
+              {line}
+              {i === bootText.length - 1 && bootPhase === 'ready' && (
+                <span className={`ml-1 ${showCursor ? 'opacity-100' : 'opacity-0'}`}>_</span>
+              )}
+            </div>
+          ))}
         </div>
       );
     }
