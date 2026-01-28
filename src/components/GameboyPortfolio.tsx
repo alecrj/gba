@@ -260,56 +260,52 @@ export default function GameboyPortfolio() {
     }, 150);
   }, []);
 
-  // Boot sequence - only runs once
+  // Boot sequence - single robust effect
   useEffect(() => {
-    if (screen !== 'boot' || bootedRef.current) return;
+    if (screen !== 'boot') return;
+    if (bootedRef.current) {
+      // Already booted, just show final state
+      setBootPhase('ready');
+      setHasBooted(true);
+      setBootText(['', 'LOADING...', '████████████ OK', '', 'PRESS START']);
+      return;
+    }
 
-    const flickerTimer = setTimeout(() => {
+    const bootSequence = ['', 'LOADING...', '████████████ OK', '', 'PRESS START'];
+    const timers: NodeJS.Timeout[] = [];
+
+    // Phase 1: Flicker (0-300ms)
+    // Already starts in 'flicker' phase
+
+    // Phase 2: Logo drops (300ms)
+    timers.push(setTimeout(() => {
       setBootPhase('logo');
       playBoot();
-    }, 300);
+    }, 300));
 
-    return () => clearTimeout(flickerTimer);
-  }, [screen, playBoot]);
-
-  useEffect(() => {
-    if (screen !== 'boot' || bootPhase !== 'logo' || bootedRef.current) return;
-
-    const logoTimer = setTimeout(() => {
+    // Phase 3: Text starts appearing (1100ms = 300 + 800)
+    timers.push(setTimeout(() => {
       setBootPhase('text');
-    }, 800);
+    }, 1100));
 
-    return () => clearTimeout(logoTimer);
-  }, [screen, bootPhase]);
+    // Phase 4: Boot text lines appear one by one
+    bootSequence.forEach((_, index) => {
+      timers.push(setTimeout(() => {
+        setBootText(prev => [...bootSequence.slice(0, index + 1)]);
 
-  useEffect(() => {
-    if (screen !== 'boot' || bootPhase !== 'text' || bootedRef.current) return;
-
-    const bootSequence = [
-      '',
-      'LOADING...',
-      '████████████ OK',
-      '',
-      'PRESS START'
-    ];
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < bootSequence.length) {
-        setBootText(prev => [...prev, bootSequence[i]]);
-        i++;
-        if (i === bootSequence.length) {
+        // Mark as ready after last line
+        if (index === bootSequence.length - 1) {
           setBootPhase('ready');
           bootedRef.current = true;
           setHasBooted(true);
         }
-      } else {
-        clearInterval(interval);
-      }
-    }, 250);
+      }, 1100 + (index + 1) * 250));
+    });
 
-    return () => clearInterval(interval);
-  }, [screen, bootPhase]);
+    return () => {
+      timers.forEach(timer => clearTimeout(timer));
+    };
+  }, [screen, playBoot]);
 
   // Cursor blink
   useEffect(() => {
@@ -431,17 +427,44 @@ export default function GameboyPortfolio() {
     // BOOT
     if (screen === 'boot') {
       return (
-        <div className={`h-full flex flex-col justify-center items-center text-center ${bootPhase === 'flicker' ? 'animate-flicker' : ''}`}>
+        <div
+          className="h-full flex flex-col justify-center items-center text-center"
+          style={{
+            animation: bootPhase === 'flicker' ? 'flicker 0.3s ease-out' : undefined,
+          }}
+        >
+          {/* CRT power-on line effect during flicker */}
+          {bootPhase === 'flicker' && (
+            <div
+              className="w-full h-0.5 animate-pulse"
+              style={{ background: colors.lightest }}
+            />
+          )}
+
+          {/* Logo with drop animation */}
           {bootPhase !== 'flicker' && (
             <>
-              <div className={`text-lg font-bold tracking-wider mb-4 ${bootPhase === 'logo' ? 'animate-drop-bounce' : ''}`}>
+              <div
+                className="text-lg font-bold tracking-wider mb-4"
+                style={{
+                  animation: bootPhase === 'logo' ? 'drop-bounce 0.6s ease-out forwards' : undefined,
+                }}
+              >
                 ◆ ALEC ◆
               </div>
+
+              {/* Boot text lines */}
               {bootPhase !== 'logo' && bootText.map((line, i) => (
-                <div key={i} className="leading-relaxed text-xs">
+                <div
+                  key={i}
+                  className="leading-relaxed text-xs"
+                  style={{
+                    animation: 'fade-in 0.15s ease-out forwards',
+                  }}
+                >
                   {line}
-                  {i === bootText.length - 1 && bootPhase === 'ready' && showCursor && (
-                    <span className="ml-1">_</span>
+                  {i === bootText.length - 1 && bootPhase === 'ready' && (
+                    <span className={showCursor ? 'opacity-100' : 'opacity-0'}>_</span>
                   )}
                 </div>
               ))}
