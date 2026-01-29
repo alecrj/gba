@@ -144,7 +144,7 @@ export default function GameboyPortfolio() {
       name: 'TOMO',
       subtitle: 'AI Travel Companion',
       year: '2025',
-      desc: 'Your AI guide to Japan. ChatGPT meets Google Maps meets local knowledge.',
+      desc: 'Plan your perfect Japan trip. AI-powered itineraries with local secrets, real-time navigation, and translation.',
       tech: ['EXPO', 'TS', 'GPT-4'],
       status: 'BUILDING',
       icon: 'plane',
@@ -154,7 +154,7 @@ export default function GameboyPortfolio() {
       name: 'NOKTURN',
       subtitle: 'AI Receptionist',
       year: '2024',
-      desc: 'Never miss a call. AI answers phones for HVAC contractors.',
+      desc: 'AI that answers calls 24/7. Books appointments, answers questions, never sleeps.',
       tech: ['ELEVEN', 'REACT', 'NODE'],
       status: 'BUILDING',
       icon: 'phone',
@@ -162,9 +162,9 @@ export default function GameboyPortfolio() {
     {
       id: 'studio',
       name: 'STUDIO',
-      subtitle: 'Web Development',
+      subtitle: 'Web Agency',
       year: '2023+',
-      desc: 'Premium websites for contractors. Built to convert.',
+      desc: 'High-converting websites for service businesses. Strategy, design, and code.',
       tech: ['NEXT', 'REACT', 'TAIL'],
       status: 'ACTIVE',
       icon: 'browser',
@@ -607,13 +607,14 @@ export default function GameboyPortfolio() {
             <button onClick={pressB} className="hover:opacity-80">◀ ABOUT</button>
             <button onClick={pressB} className="hover:opacity-80">B:BACK</button>
           </div>
-          <div className="flex-1 text-xs leading-relaxed space-y-3">
-            <p>I build apps and websites that solve real problems.</p>
-            <p>11 ventures. Most failed. Each one taught me what actually works.</p>
-            <p>Now I focus on:</p>
-            <p>→ Apps that help people</p>
-            <p>→ Sites that convert</p>
-            <p className="opacity-50 pt-2">Florida, USA</p>
+          <div className="flex-1 text-xs leading-relaxed space-y-2">
+            <p>Developer & founder building tools that make life easier.</p>
+            <p className="pt-1">I ship fast, iterate often, and obsess over the details.</p>
+            <p className="pt-2">Currently focused on:</p>
+            <p>→ AI-powered products</p>
+            <p>→ Mobile apps (React Native)</p>
+            <p>→ High-converting websites</p>
+            <p className="opacity-50 pt-3">Based in Florida</p>
           </div>
           {/* Resume download */}
           <button
@@ -668,32 +669,33 @@ export default function GameboyPortfolio() {
             <button onClick={pressB} className="hover:opacity-80">B:BACK</button>
           </div>
           <div className="flex-1 flex flex-col justify-center text-center">
-            <div className="text-sm mb-6">Let&apos;s work together.</div>
+            <div className="text-sm mb-2">Got a project?</div>
+            <div className="text-xs opacity-70 mb-4">Let&apos;s build something great.</div>
             <div className="space-y-3 text-xs">
               <a
-                href="mailto:hello@alec.dev"
+                href="mailto:contactalecrod@gmail.com"
+                className="block py-3 px-4 border-2 transition-opacity hover:opacity-80"
+                style={{borderColor: colors.lightest}}
+              >
+                → SEND EMAIL
+              </a>
+              <a
+                href="https://github.com/alecrj"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="block py-2 px-4 border transition-opacity hover:opacity-80"
-                style={{borderColor: colors.light}}
-              >
-                EMAIL
-              </a>
-              <a
-                href="https://twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-2 px-4 border opacity-70 transition-opacity hover:opacity-100"
-                style={{borderColor: colors.dark}}
-              >
-                TWITTER
-              </a>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block py-2 px-4 border opacity-70 transition-opacity hover:opacity-100"
                 style={{borderColor: colors.dark}}
               >
                 GITHUB
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-2 px-4 border transition-opacity hover:opacity-80"
+                style={{borderColor: colors.dark}}
+              >
+                LINKEDIN
               </a>
             </div>
           </div>
@@ -782,7 +784,7 @@ export default function GameboyPortfolio() {
 
   return (
     <div
-      className="min-h-screen min-h-[100dvh] flex items-center justify-center p-4 safe-area-bottom"
+      className="min-h-screen min-h-[100dvh] flex items-center justify-center p-2 md:p-4 safe-area-bottom"
       style={{ background: '#1a1a2e' }}
     >
       {/* Gameboy Device */}
